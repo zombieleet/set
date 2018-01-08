@@ -170,24 +170,141 @@ intersect() {
         return 1;
     }
 
-    local -n first_set=${check_valid_first_set};
-    local -n second_set=${check_valid_second_set};
+    local -n first_intersect_set=${check_valid_first_set};
+    local -n second_intersect_set=${check_valid_second_set};
     local -n intersect_result=${check_intersect_result};
 
 
-    for first_set_val in ${!first_set[@]};do
-        
-        for second_set_val in ${!second_set[@]};do
+    for first_set_val in ${!first_intersect_set[@]};do
 
-            [[ "${first_set[$first_set_val]}" == "${second_set[$second_set_val]}" ]] && {
-                intersect_result+=( "${first_set[$first_set_val]}" );
+        for second_set_val in ${!second_intersect_set[@]};do
+
+            [[ "${first_intersect_set[$first_set_val]}" == "${second_intersect_set[$second_set_val]}" ]] && {
+                intersect_result+=( "${first_intersect_set[$first_set_val]}" );
                 break;
             }
-            
+
         done
-        
+
     done
     return 0;
+}
+
+
+has() {
+
+    local check_valid_set_name=${1}
+    local has_data=${2}
+
+    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && {
+        return 1;
+    }
+
+    [[ ${check_valid_set_name} =~ [[:space:]] ]] && {
+        echo "space"
+        return 1;
+    }
+
+    [[ -z "${has_data}" ]] && {
+        return 1;
+    }
+
+    local -n has_set=${check_valid_set_name};
+
+    for has_set_item in "${has_set[@]}";do
+        [[ "${has_set_item}" == "${has_data}" ]] && return 0;
+    done
+
+    return 1;
+}
+
+union() {
+
+    local check_valid_first_set=${1}
+    local check_valid_second_set=${2}
+    local check_union_result=${3}
+
+    {
+        [[ ! ${check_valid_first_set} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_union_result} =~ ^([[:alpha:]]|_) ]]
+
+    } && {
+        return 1;
+    }
+
+
+    {
+        [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
+            [[ ${check_valid_second_set} =~  [[:space:]] ]] || \
+            [[ ${check_union_result} =~ [[:space:]] ]]
+    } && {
+        return 1;
+    }
+
+    local -n first_union_set=${check_valid_first_set};
+    local -n second_union_set=${check_valid_second_set};
+    local -n union_result=${check_union_result};
+
+    intersect first_union_set second_union_set union_result
+
+    add union_result ${first_union_set[@]}
+    add union_result ${second_union_set[@]}
+
+
+}
+
+
+subset() {
+    
+    local check_valid_first_set=${1}
+    local check_valid_second_set=${2}
+
+    {
+        [[ ! ${check_valid_first_set} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]]
+
+    } && {
+        return 1;
+    }
+
+
+    {
+        [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
+            [[ ${check_valid_second_set} =~  [[:space:]] ]]
+    } && {
+        return 1;
+    }
+
+
+    local -n first_pset=${check_valid_first_set}
+    local -n second_pset=${check_valid_second_set}
+
+
+    declare -i occurence=0;
+
+
+    for spset in "${second_pset[@]}";do
+        has first_pset "${spset}"
+        [[ $? == 0 ]] && occurence+=1;
+    done
+    
+    # no match
+    (( occurence == 0 )) && return 1;
+
+    # proper subset, not all of second_pset is in first_pset
+    [[ "${#first_pset[@]}" != "${occurence}" ]] && {
+        declare -g PROPER_SUBSET="true"
+        declare -g IMPROPER_SUBSET="false"
+        return 0;
+    }
+
+    # improper subset, all of second_pset is in first_pset
+    [[ "${#first_pset[@]}" == "${occurence}" ]] && {
+        declare -g PROPER_SUBSET="false"
+        declare -g IMPROPER_SUBSET="true"
+        return 0;
+    }
 }
 
 
@@ -209,6 +326,22 @@ echo ${set_size}
 
 createSet anotherSet 5 7 8 9 "hello" "hi"
 
-intersection mySet anotherSet intersectResult
+intersect mySet anotherSet intersectResult
 
 echo ${intersectResult[@]}
+
+union mySet anotherSet unifyResult
+
+echo ${unifyResult[@]}
+
+subset mySet anotherSet
+
+createSet testSet "wow" "this" 20 50
+
+subset mySet testSet
+
+createSet testAnotherSet ${mySet[@]}
+
+subset mySet testAnotherSet
+
+echo $?
