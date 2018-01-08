@@ -121,7 +121,7 @@ size() {
 
     local check_valid_set_name=${1}
     local check_valid_set_size=${2}
-    
+
     {
         [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_valid_set_size} =~ ^([[:alpha:]]|_) ]]
@@ -129,7 +129,7 @@ size() {
         echo "shit"
         return 1;
     }
-    
+
 
     {
         [[ ${check_valid_set_name} =~ [[:space:]] ]] || \
@@ -143,25 +143,25 @@ size() {
     local -n set_size_=${check_valid_set_size}
 
     set_size_=${#set_name_[@]}
-    
+
 }
 
-intersection() {
-    
+intersect() {
+
     local check_valid_first_set=${1}
     local check_valid_second_set=${2}
     local check_intersect_result=${3}
-    
+
     {
         [[ ! ${check_valid_first_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_intersect_result} =~ ^([[:alpha:]]|_) ]]
-        
+
     } && {
         return 1;
     }
 
-    
+
     {
         [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
             [[ ${check_valid_second_set} =~  [[:space:]] ]] || \
