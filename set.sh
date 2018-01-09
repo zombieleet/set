@@ -256,7 +256,7 @@ union() {
 
 
 subset() {
-    
+
     local check_valid_first_set=${1}
     local check_valid_second_set=${2}
 
@@ -288,7 +288,7 @@ subset() {
         has first_pset "${spset}"
         [[ $? == 0 ]] && occurence+=1;
     done
-    
+
     # no match
     (( occurence == 0 )) && return 1;
 
