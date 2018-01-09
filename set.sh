@@ -307,6 +307,153 @@ subset() {
     }
 }
 
+map() {
+    :;
+}
+
+filter() {
+    :;
+}
+
+closestTo() {
+    local check_valid_closest=${1}
+    # non integers will be treated as 0
+    # fix for floating point numbers
+    declare -i data_to_check=${2}
+    local check_valid_result=${3}
+
+    {
+        [[ ! ${check_valid_closest} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_valid_result} =~ ^([[:alpha:]]|_) ]]
+
+    } && {
+        return 1;
+    }
+
+
+    {
+        [[ ${check_valid_closest} =~  [[:space:]] ]] || \
+            [[ ${check_valid_result} =~  [[:space:]] ]]
+    } && {
+        return 1;
+    }
+
+
+
+    local -n closest_set=${check_valid_closest}
+    local -n result_set=${check_valid_result}
+
+
+    declare -i close_nums=( ${closest_set[@]} )
+
+
+    # for close_item in "${closest_set[@]}";do
+    #     [[ ! ${close_item} =~  ^[0-9]+$ ]] && {
+    #         printf "%s\n" "${close_item} is not an integer"
+    #         return 1;
+    #     }
+    # done
+
+    # research on absolute values in bash
+
+    declare -i closest_value=${closest_set[0]}
+    declare -i prev=$(( closest_value - data_to_check ))
+
+    for close_item in ${close_nums[@]};do
+        declare -i diff=$(( close_item - data_to_check ))
+        echo $diff
+        if (( diff < prev ));then
+            prev=diff;
+            closest_value=${close_item}
+        fi
+    done
+
+    result_set=${closest_value}
+
+    return 0;
+}
+
+inset(){
+
+    local check_inset_set=${1}
+    local data_to_check=${2}
+
+    [[ ! ${check_inset_set} =~ ^([[:alpha:]]|_) ]] && {
+        return 1;
+    }
+
+
+    [[ ${check_inset_set} =~ [[:space:]] ]] && {
+        echo "space"
+        return 1;
+    }
+
+    local -n inset_set_name=${check_inset_set}
+
+    for inset_item in "${inset_set_name[@]}";do
+        [[ "${inset_item}" == "${data_to_check}" ]] && return 0;
+    done
+
+    return 1;
+
+}
+
+clear() {
+
+    local check_clear_set=${1}
+
+    [[ ! ${check_clear_set} =~ ^([[:alpha:]]|_) ]] && {
+        return 1;
+    }
+
+
+    [[ ${check_clear_set} =~ [[:space:]] ]] && {
+        echo "space"
+        return 1;
+    }
+
+    local -n clear_set_name=${check_clear_set}
+
+    unset clear_set_name;
+
+    return 0;
+}
+
+sum() {
+
+    local check_sum_set=${1}
+    local check_sum_output=${2}
+
+    {
+        [[ ! ${check_sum_set} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_sum_output} =~ ^([[:alpha:]]|_) ]]
+    } && {
+        return 1;
+    }
+
+
+    {
+        [[ ${check_sum_set} =~ [[:space:]] ]] || \
+            [[ ${check_sum_output} =~ [[:space:]] ]]
+    } && {
+        echo "space"
+        return 1;
+    }
+
+    local -n sum_set=${check_sum_set}
+    local -n sum_output=${check_sum_output}
+
+    declare -i total=0;
+
+    # fix for floating point numbers
+    for sum_item in "${sum_set[@]}";do
+        [[ ${sum_set} =~ ^[0-9]+$ ]] && total+=${sum_item}
+    done
+
+    sum_output=${total}
+
+    return 0;
+}
 
 createSet mySet 1 2 3 4 "hi" "hello" "world"
 
