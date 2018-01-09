@@ -492,3 +492,27 @@ createSet testAnotherSet ${mySet[@]}
 subset mySet testAnotherSet
 
 echo $?
+
+echo ${mySet[@]}
+
+inset mySet 5
+echo $?
+
+inset mySet 9
+echo $?
+
+sum mySet sumNum
+
+echo ${sumNum}
+
+
+clear mySet
+echo $?
+echo ${mySet[@]}
+
+
+createSet myNum 3 5 7 12 15 10 22
+
+closestTo myNum 5 result
+echo $?
+echo ${result}
