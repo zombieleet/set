@@ -1,46 +1,88 @@
 #!/usr/bin/env bash
-#TODO: check validity of set i.e if set
-#   was actually created by createSet function
 
-#[[ "${DEBUG}" == "true" ]] && set -u
 
-createSet() {
+# VALID_SET array holds all set name
+declare -a VALID_SET;
 
-    local check_valid_set_name=${1}
 
-    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
 
-    [[ ${check_valid_set_name} =~ [[:space:]] ]] && {
-        echo "space"
-        return 1;
-    }
+# checks if a set is valid
+validSet() {
 
-    local -n new_set_name=${check_valid_set_name}
+    local setname=${1}
 
-    shift;
+    [[ ! ${setname} =~ ^([[:alpha:]]|_) ]] && return 1;
 
-    (( $# == 0 )) && {
-        return 1;
-    }
+    [[ ${setname} =~ [[:space:]] ]] && return 1;
 
-    new_set_name=( ${@} );
+
+    local -n setname__=${setname}
+
+    local found=0;
+
+    for v_item in "${VALID_SET[@]}";do
+        [[ "${setname}" == "${v_item}" ]] && found=1 && break;
+    done
+
+    for items in "${setname__[@]}";do
+        declare -i contains=0;
+        for items__ in "${setname_[@]}";do
+            [[ "${items}" == "${items__}" ]] && contains+=1;
+        done
+        (( contains > 1 )) && found=0 && break;
+    done
+
+    (( found == 0 )) && return 1;
 
     return 0;
 }
 
-add() {
+# creates a set
+createSet() {
+
+    # first argument should be the name you want to hold
+    #         the set values
+    # second argument should be list of value to add to argument 1
+    # the set will contain unique values
+    # this function should be called before any other fucntion
+    # createSet mySet 1 2 3 4 bash ksh zsh zsh
+    # echo ${mySet[@]}  => 1 2 3 4 bash ksh zsh
+
 
     local check_valid_set_name=${1}
 
-    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
+    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && return 1;
 
-    [[ ${check_valid_set_name} =~ [[:space:]] ]] && {
-        return 1;
-    }
+    [[ ${check_valid_set_name} =~ [[:space:]] ]] && return 1;
+
+    shift;
+
+    VALID_SET+=( "${check_valid_set_name}" )
+
+    for n_set in "${@}";do
+        add "${check_valid_set_name}" "${n_set}"
+    done
+
+    return 0;
+}
+
+
+add() {
+
+    # first argument should be the set array
+    #    that would all the values represented by shift ; ${@}
+    # add mySet 7 8 9 10 3 4
+    # echo ${mySet[@]} 1 2 3 4 bash ksh zsh 7 8 9 10
+
+    local check_valid_set_name=${1}
+
+    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && return 1;
+
+    [[ ${check_valid_set_name} =~ [[:space:]] ]] && return 1;
+
+    validSet "${check_valid_set_name}"
+
+    (( $? == 1 )) && return 1;
 
     local -n add_to_set=${check_valid_set_name};
 
@@ -48,9 +90,7 @@ add() {
 
     shift;
 
-    (( $# == 0 )) && {
-        return 1;
-    }
+    (( $# == 0 )) && return 1;
 
     for add_new_item in "${@}";do
 
@@ -78,16 +118,22 @@ add() {
 
 remove() {
 
+    # first argument should be a set cretead by createSet
+    # subsequent argument should be the values specified by shift ; ${@}
+    #   to be removed
+
+    # remove mySet ksh zsh
+
+
     local check_valid_set_name=${1}
 
-    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
+    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && return 1;
 
-    [[ ${check_valid_set_name} =~ [[:space:]] ]] && {
-        echo "space"
-        return 1;
-    }
+    [[ ${check_valid_set_name} =~ [[:space:]] ]] && return 1;
+
+    validSet "${check_valid_set_name}"
+
+    (( $? == 1 )) && return 1;
 
     local -n remove_from_set=${check_valid_set_name};
 
@@ -96,9 +142,7 @@ remove() {
     shift ;
 
 
-    (( $# == 0 )) && {
-        return 1;
-    }
+    (( $# == 0 )) && return 1;
 
     for remove_item in "${@}";do
 
@@ -119,25 +163,30 @@ remove() {
 
 size() {
 
+    # returns the size of a set
+    # first argument should be a set created by createSet
+    # second argument should be name of the variable to hold
+    #   the size of the set
+
+    # size mySet setSize
+    # echo "${setSize}"
+
     local check_valid_set_name=${1}
     local check_valid_set_size=${2}
 
     {
         [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_valid_set_size} =~ ^([[:alpha:]]|_) ]]
-    } && {
-        echo "shit"
-        return 1;
-    }
+    } && return 1;
 
 
     {
         [[ ${check_valid_set_name} =~ [[:space:]] ]] || \
             [[ ${check_valid_set_size} =~ [[:space:]] ]]
-    } && {
-        echo "space"
-        return 1;
-    }
+    } && return 1;
+
+    validSet "${check_valid_set_name}"
+    (( $? == 1 )) && return 1;
 
     local -n set_name_=${check_valid_set_name}
     local -n set_size_=${check_valid_set_size}
@@ -148,6 +197,16 @@ size() {
 
 intersect() {
 
+    # requires 3 argument
+    # argument 1 and 2 should be set created by createSet
+
+    # add the intersection of argument 1 and 2 to argument 3
+
+    # createSet anotherSet 1 2 3 bash foo bar baz
+    # intersect mySet anotherSet intersectSet
+
+    # echo ${intersectSect[@]} => 1 2 3 bash
+
     local check_valid_first_set=${1}
     local check_valid_second_set=${2}
     local check_intersect_result=${3}
@@ -157,27 +216,31 @@ intersect() {
             [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_intersect_result} =~ ^([[:alpha:]]|_) ]]
 
-    } && {
-        return 1;
-    }
+    } && return 1;
 
 
     {
         [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
             [[ ${check_valid_second_set} =~  [[:space:]] ]] || \
             [[ ${check_intersect_result} =~ [[:space:]] ]]
-    } && {
-        return 1;
-    }
+    } && return 1;
+
+    validSet "${check_valid_first_set}"
+    (( $? == 1 )) && return 1;
+
+    validSet "${check_valid_second_set}"
+    (( $? == 1 )) && return 1;
+
 
     local -n first_intersect_set=${check_valid_first_set};
     local -n second_intersect_set=${check_valid_second_set};
     local -n intersect_result=${check_intersect_result};
 
+    VALID_SET+=( "${check_intersect_result}" )
 
-    for first_set_val in ${!first_intersect_set[@]};do
+    for first_set_val in "${!first_intersect_set[@]}";do
 
-        for second_set_val in ${!second_intersect_set[@]};do
+        for second_set_val in "${!second_intersect_set[@]}";do
 
             [[ "${first_intersect_set[$first_set_val]}" == "${second_intersect_set[$second_set_val]}" ]] && {
                 intersect_result+=( "${first_intersect_set[$first_set_val]}" );
@@ -193,21 +256,24 @@ intersect() {
 
 has() {
 
+    # requires 2 arguments
+    # argument 1 is a set created by createSet
+    # argument 2 is the value to check for it's existence in argument 1
+    # return value is 0 for true( arg 2 is in arg 1 ) and 1 for false ( arg 2 is not in arg 1 )
+    # has anotherSet foo
+
+
     local check_valid_set_name=${1}
     local has_data=${2}
 
-    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
+    [[ ! ${check_valid_set_name} =~ ^([[:alpha:]]|_) ]] && return 1;
 
-    [[ ${check_valid_set_name} =~ [[:space:]] ]] && {
-        echo "space"
-        return 1;
-    }
+    [[ ${check_valid_set_name} =~ [[:space:]] ]] && return 1;
 
-    [[ -z "${has_data}" ]] && {
-        return 1;
-    }
+    [[ -z "${has_data}" ]] && return 1;
+
+    validSet "${check_valid_set_name}";
+    (( $? == 1 )) && return 1;
 
     local -n has_set=${check_valid_set_name};
 
@@ -220,6 +286,16 @@ has() {
 
 union() {
 
+    # opposite of intersect
+    # requires 3 argument
+    # argument 1 and argument 2 are set created by createSet
+    # the union of argument 1 and argument 2 will be placed in argument 3
+    # argument 3 will be created as a set
+
+    # union mySet anotherSet unionSet
+
+    # echo ${unionSet[@]} => 1 2 3 bash foo bar baz
+
     local check_valid_first_set=${1}
     local check_valid_second_set=${2}
     local check_union_result=${3}
@@ -229,33 +305,62 @@ union() {
             [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_union_result} =~ ^([[:alpha:]]|_) ]]
 
-    } && {
-        return 1;
-    }
+    } && return 1
 
 
     {
         [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
             [[ ${check_valid_second_set} =~  [[:space:]] ]] || \
             [[ ${check_union_result} =~ [[:space:]] ]]
-    } && {
-        return 1;
-    }
+    } && return 1
+
+    validSet "${check_valid_first_set}";
+    (( $? == 1 )) && return 1;
+
+    validSet "${check_valid_second_set}";
+    (( $? == 1 )) && return 1;
 
     local -n first_union_set=${check_valid_first_set};
     local -n second_union_set=${check_valid_second_set};
-    local -n union_result=${check_union_result};
+    #local -n union_result=${check_union_result};
 
-    intersect first_union_set second_union_set union_result
+    createSet "${check_union_result}";
 
-    add union_result ${first_union_set[@]}
-    add union_result ${second_union_set[@]}
+    #intersect first_union_set second_union_set union_result
 
+    intersect "${check_valid_first_set}" "${check_valid_second_set}" "${check_union_result}"
+
+
+    add "${check_union_result}" "${first_union_set[@]}"
+    add "${check_union_result}" "${second_union_set[@]}"
+
+    return 0;
 
 }
 
 
 subset() {
+
+    # requires 2 argument
+    # argument 1 and argument 2 are both sets
+    # this function checks if argument 1 is a subset of argument 2
+    #    it deals with both proper subset and improper subset
+
+    # if argument 1 is a proper subset of argument 2
+    #    global variable PROPER_SUBSET=true
+    # if argument 1 is not a proper subset of argument 2
+    #    global variable IMPROPER_SUBSET=true
+
+    # subset mySet unionSet
+    # echo ${PROPER_SUBSET} => false
+    # echo ${IMPROPER_SUBSET} => true
+
+    # createSet setOne 1 2 3
+    # createSet setTwo 1 2 3
+
+    # subset setOne setTwo
+    # echo ${PROPER_SUBSET} => true
+    # echo ${IMPROPER_SUBSET} => false
 
     local check_valid_first_set=${1}
     local check_valid_second_set=${2}
@@ -264,18 +369,19 @@ subset() {
         [[ ! ${check_valid_first_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_valid_second_set} =~ ^([[:alpha:]]|_) ]]
 
-    } && {
-        return 1;
-    }
+    } && return 1;
 
 
     {
         [[ ${check_valid_first_set} =~  [[:space:]] ]] || \
             [[ ${check_valid_second_set} =~  [[:space:]] ]]
-    } && {
-        return 1;
-    }
+    } && return 1;
 
+    validSet "${check_valid_first_set}";
+    (( $? == 1 )) && return 1;
+
+    validSet "${check_valid_second_set}";
+    (( $? == 1 )) && return 1;
 
     local -n first_pset=${check_valid_first_set}
     local -n second_pset=${check_valid_second_set}
@@ -285,7 +391,8 @@ subset() {
 
 
     for spset in "${second_pset[@]}";do
-        has first_pset "${spset}"
+        #has first_pset "${spset}"
+        has "${check_valid_first_set}" "${spset}"
         [[ $? == 0 ]] && occurence+=1;
     done
 
@@ -373,44 +480,29 @@ closestTo() {
     return 0;
 }
 
-inset(){
-
-    local check_inset_set=${1}
-    local data_to_check=${2}
-
-    [[ ! ${check_inset_set} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
-
-
-    [[ ${check_inset_set} =~ [[:space:]] ]] && {
-        echo "space"
-        return 1;
-    }
-
-    local -n inset_set_name=${check_inset_set}
-
-    for inset_item in "${inset_set_name[@]}";do
-        [[ "${inset_item}" == "${data_to_check}" ]] && return 0;
-    done
-
-    return 1;
-
-}
 
 clear() {
 
+    # this function clears the entire set
+    # requires only 1 argument
+    # argument 1 is a set created by createSet
+
+
+    # clear intersectSect
+    # clear unionSet
+    # clear mySet
+    # clear anotherSet
+    
+    
     local check_clear_set=${1}
 
-    [[ ! ${check_clear_set} =~ ^([[:alpha:]]|_) ]] && {
-        return 1;
-    }
+    [[ ! ${check_clear_set} =~ ^([[:alpha:]]|_) ]] && return 1;
 
 
-    [[ ${check_clear_set} =~ [[:space:]] ]] && {
-        echo "space"
-        return 1;
-    }
+    [[ ${check_clear_set} =~ [[:space:]] ]] &&  return 1;
+
+    validSet "${check_clear_set}";
+    (( $? == 1 )) && return 1;
 
     local -n clear_set_name=${check_clear_set}
 
