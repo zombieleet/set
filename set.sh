@@ -414,63 +414,55 @@ subset() {
     }
 }
 
-map() {
-    :;
-}
-
-filter() {
-    :;
-}
 
 closestTo() {
+
+    # requires 3 argument
+    # argument 1 is created by createSet
+    # argument 2 is the value to check for it's closest value
+    # argument 3 holds the final result
+
+    # add setTwo 23 34 54 22 30
+
+    # closestTo setTwo 5 nearValue
+    # echo ${nearValue} 3
+
     local check_valid_closest=${1}
-    # non integers will be treated as 0
-    # fix for floating point numbers
-    declare -i data_to_check=${2}
+    local data_to_check=${2}
     local check_valid_result=${3}
 
     {
         [[ ! ${check_valid_closest} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_valid_result} =~ ^([[:alpha:]]|_) ]]
 
-    } && {
-        return 1;
-    }
+    } && return 1;
 
 
     {
         [[ ${check_valid_closest} =~  [[:space:]] ]] || \
             [[ ${check_valid_result} =~  [[:space:]] ]]
-    } && {
-        return 1;
-    }
+    } && return 1;
 
 
+    validSet "${check_valid_closest}";
+    (( $? == 1 )) && return 1;
 
     local -n closest_set=${check_valid_closest}
     local -n result_set=${check_valid_result}
 
 
-    declare -i close_nums=( ${closest_set[@]} )
+    declare -a close_nums=( ${closest_set[@]} )
 
 
-    # for close_item in "${closest_set[@]}";do
-    #     [[ ! ${close_item} =~  ^[0-9]+$ ]] && {
-    #         printf "%s\n" "${close_item} is not an integer"
-    #         return 1;
-    #     }
-    # done
+    local closest_value=${closest_set[0]}
+    local prev=$( bc <<<"${closest_value} - ${data_to_check}")
+    prev=${prev#-}
 
-    # research on absolute values in bash
-
-    declare -i closest_value=${closest_set[0]}
-    declare -i prev=$(( closest_value - data_to_check ))
-
-    for close_item in ${close_nums[@]};do
-        declare -i diff=$(( close_item - data_to_check ))
-        echo $diff
+    for close_item in "${close_nums[@]}";do
+        local diff=$( bc <<<"${close_item} - ${data_to_check}");
+        diff=${diff#-}
         if (( diff < prev ));then
-            prev=diff;
+            prev=${diff};
             closest_value=${close_item}
         fi
     done
@@ -492,8 +484,8 @@ clear() {
     # clear unionSet
     # clear mySet
     # clear anotherSet
-    
-    
+
+
     local check_clear_set=${1}
 
     [[ ! ${check_clear_set} =~ ^([[:alpha:]]|_) ]] && return 1;
@@ -513,33 +505,43 @@ clear() {
 
 sum() {
 
+    # this function sums up the entire set element
+    # requires 2 argument
+    # argument 1 is a set created by createSet
+    # argument 2 a variable to hold the sum of all elements of the set
+
+    # sum setTwo total
+    # echo ${total} => 169
+
     local check_sum_set=${1}
     local check_sum_output=${2}
+
+    [[ "$(type -t bc)" != "file" ]] && return 1;
 
     {
         [[ ! ${check_sum_set} =~ ^([[:alpha:]]|_) ]] || \
             [[ ! ${check_sum_output} =~ ^([[:alpha:]]|_) ]]
-    } && {
-        return 1;
-    }
+    } && return 1;
 
 
     {
         [[ ${check_sum_set} =~ [[:space:]] ]] || \
             [[ ${check_sum_output} =~ [[:space:]] ]]
-    } && {
-        echo "space"
-        return 1;
-    }
+    }  && return 1;
+
+
+    validSet "${check_sum_set}";
+    (( $? == 1 )) && return 1;
+
 
     local -n sum_set=${check_sum_set}
     local -n sum_output=${check_sum_output}
 
-    declare -i total=0;
+    local total=0;
 
-    # fix for floating point numbers
     for sum_item in "${sum_set[@]}";do
-        [[ ${sum_set} =~ ^[0-9]+$ ]] && total+=${sum_item}
+        #[[ ${sum_set} =~ ^([0-9]+|[0-9]+\.[0-9]+)$ ]] && total+=${sum_item}
+        total=$( bc <<<"${sum_item} + ${total}")
     done
 
     sum_output=${total}
@@ -547,64 +549,54 @@ sum() {
     return 0;
 }
 
-createSet mySet 1 2 3 4 "hi" "hello" "world"
+difference() {
 
-echo ${mySet[@]}
+    # requires 3 argument
+    # argument 1 and 2 are set created by createSet
 
-add mySet 4 5 7 2 "hi" 3
+    # the elements which are in argument 1 but not in argument 2
+    #   is placed in the third argument
 
-echo ${mySet[@]}
+    # the third argument will be created as a set by this function
 
-remove mySet 4 7
+    # difference setOne setTwo diffSet
 
-echo ${mySet[@]}
-
-size mySet set_size
-
-echo ${set_size}
-
-createSet anotherSet 5 7 8 9 "hello" "hi"
-
-intersect mySet anotherSet intersectResult
-
-echo ${intersectResult[@]}
-
-union mySet anotherSet unifyResult
-
-echo ${unifyResult[@]}
-
-subset mySet anotherSet
-
-createSet testSet "wow" "this" 20 50
-
-subset mySet testSet
-
-createSet testAnotherSet ${mySet[@]}
-
-subset mySet testAnotherSet
-
-echo $?
-
-echo ${mySet[@]}
-
-inset mySet 5
-echo $?
-
-inset mySet 9
-echo $?
-
-sum mySet sumNum
-
-echo ${sumNum}
+    # echo ${diffSet[@]} => 23 34 54 22 30
 
 
-clear mySet
-echo $?
-echo ${mySet[@]}
+    local check_diff_first=${1}
+    local check_diff_second=${2}
+    local check_diff_output=${3}
+
+    {
+        [[ ! ${check_diff_first} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_diff_second} =~ ^([[:alpha:]]|_) ]] || \
+            [[ ! ${check_diff_output} =~ ^([[:alpha:]]|_) ]]
+    }  && return 1;
 
 
-createSet myNum 3 5 7 12 15 10 22
+    {
+        [[ ${check_diff_first} =~ [[:space:]] ]] || \
+            [[ ${check_diff_second} =~ [[:space:]] ]] || \
+            [[ ${check_diff_output} =~ [[:space:]] ]]
+    } && return 1;
 
-closestTo myNum 5 result
-echo $?
-echo ${result}
+    validSet "${check_diff_first}";
+    (( $? == 1 )) && return 1;
+
+    validSet "${check_diff_second}";
+    (( $? == 1 )) && return 1;
+
+    #local -n first_diff=${check_diff_first}
+    local -n second_diff=${check_diff_second}
+    local -n output_diff=${check_diff_output}
+
+    VALID_SET+=( "${check_diff_output}" )
+
+    for second_item in "${second_diff[@]}";do
+        has "${check_diff_first}" "${second_item}"
+        (( $? == 1 )) && output_diff+=( "${second_item}" )
+    done
+
+    return 0;
+}
