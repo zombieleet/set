@@ -15,7 +15,7 @@
 
     first argument should be the set array
     that would all the values represented by shift ; ${@}
-    
+
 ```bash
     add mySet 7 8 9 10 3 4
     echo ${mySet[@]} 1 2 3 4 bash ksh zsh 7 8 9 10
@@ -34,7 +34,7 @@
     first argument should be a set created by createSet
     second argument should be name of the variable to hold
     the size of the set
-    
+
 ```bash
     size mySet setSize
     echo "${setSize}"
@@ -60,7 +60,7 @@
     argument 2 is the value to check for it's existence in argument 1
     return value is 0 for true( arg 2 is in arg 1 ) and 1 for false ( arg 2 is not in arg 1 )
     `has anotherSet foo`
-    
+
 # union
 
     opposite of intersect
@@ -96,7 +96,7 @@
     echo ${PROPER_SUBSET} => true
     echo ${IMPROPER_SUBSET} => false
 ```
-    
+
 # closestTo
 
     requires 3 argument
@@ -148,4 +148,68 @@
 ```bash
     difference setOne setTwo diffSet
     echo ${diffSet[@]} => 23 34 54 22 30
+```
+
+
+
+
+```bash
+
+source ./set.sh
+
+createSet mySet 1 2 3 4 bash ksh zsh zsh
+
+echo "${mySet[@]}"
+
+add mySet 7 8 9 10 3 4
+
+echo "${mySet[@]}"
+
+remove mySet ksh zsh
+
+echo "${mySet[@]}"
+
+size mySet setSize
+
+echo "${setSize}"
+
+createSet anotherSet 1 2 3 bash foo bar baz
+
+intersect mySet anotherSet intersectSet
+
+echo "${intersectSet[@]}"
+
+has anotherSet foo
+echo $?
+
+union mySet anotherSet unionSet
+echo "${unionSet[@]}"
+
+subset mySet unionSet
+echo "${PROPER_SUBSET}"
+echo "${IMPROPER_SUBSET}"
+
+createSet setOne 1 2 3
+createSet setTwo 1 2 3
+
+subset setOne setTwo
+echo "${PROPER_SUBSET}"
+echo "${IMPROPER_SUBSET}"
+
+add setTwo 23 34 54 22 30
+
+closestTo setTwo 5 nearValue
+echo "${nearValue}"
+
+clear intersectSect
+clear unionSet
+clear mySet
+clear anotherSet
+
+sum setTwo result
+echo "${result}"
+
+difference setOne setTwo diffSet
+
+echo "${diffSet[@]}"
 ```
