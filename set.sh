@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # VALID_SET array holds all set name
 declare -a VALID_SET;
 
