@@ -2,9 +2,9 @@
 function Set_S(...elements) {
 
     if ( ! (this instanceof Set_S) )
-        return new Set_S(elements);
+        return new Set_S(...elements);
 
-    return this.CreateSet(elements);
+    return this.createSet(elements);
 }
 
 
@@ -32,7 +32,7 @@ Set_S.prototype.remove = function (...values) {
 };
 
 Set_S.prototype.size = function () {
-    return this.elements.length();
+    return this.elements.length;
 };
 
 
@@ -44,19 +44,21 @@ Set_S.prototype.intersect = function(set) {
     let intersection = [];
 
     for ( let j = 0; j < this.elements.length; j++ ) {
-        for ( let i = 0; i < set.elements.length; set++ ) {
-            if ( this.elements[j] === set.elements[i] )
-                intersection.push();
+        for ( let i = 0; i < set.elements.length; i++ ) {
+            if ( this.elements[j] === set.elements[i] ) {
+                intersection.push(this.elements[j]);
+                break;
+            }
         }
     }
 
-    let interSect = new Set(...intersection);
+    let interSect = new Set_S(...intersection);
 
     return interSect;
 };
 
 Set_S.prototype.has = function(data) {
-    return this.elements.includes(data);
+    return [].includes.call(this.elements, data);
 };
 
 
@@ -88,7 +90,7 @@ Set_S.prototype.subset = function(set) {
 
     if ( this.elements.length !== occurence )
         return { PROPER_SUBSET: true, IMPROPER_SUBSET: false };
-
+    
     return { PROPER_SUBSET: false, IMPROPER_SUBSET: true };
 };
 
@@ -97,13 +99,9 @@ Set_S.prototype.clear = function () {
     return this;
 };
 
-Set_S.prototype.free = function () {
-    this = null;
-    return ;
-};
 
 Set_S.prototype.sum = function () {
-    
+
     let total = 0;
 
     for ( let i = 0; i < this.elements.length; i++) {
@@ -116,16 +114,23 @@ Set_S.prototype.sum = function () {
 
 
 Set_S.prototype.difference = function (set) {
-    
+
     if ( ! ( set instanceof Set_S ) )
         return false;
 
-    let diffSet = new Set();
-    
+    let diffSet = new Set_S();
+
     for ( let i = 0; i < set.elements.length ; i++ ) {
         let hasValue = this.has(set.elements[i]);
         if ( ! hasValue ) {
             diffSet.add(set.elements[i]);
+        }
+    }
+
+    for ( let i = 0; i < this.elements.length ; i++ ) {
+        let hasValue = set.has(this.elements[i]);
+        if ( ! hasValue ) {
+            diffSet.add(this.elements[i]);
         }
     }
 
@@ -143,5 +148,11 @@ Set_S.prototype.filter = function(func) {
 Set_S.prototype.map = function (func) {
     return [].forEach.call(this.elements,func);
 };
+
+Set_S.prototype.peek = function() {
+    const value = this.elements[Math.floor(Math.random(this.elements.length) * this.elements.length + 1)];
+    return value ? value : this.elements[0];
+};
+
 
 module.exports = Set_S;
